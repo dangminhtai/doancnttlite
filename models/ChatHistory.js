@@ -1,35 +1,21 @@
 import mongoose from "mongoose";
 
 const messagePartSchema = new mongoose.Schema({
-    text: {
-        type: String,
-        required: false,
-    },
+    text: String,
     fileData: {
-        mimeType: { type: String },
-        fileUri: { type: String },
+        mimeType: String,
+        fileUri: String,
     },
 });
 
-const chatHistorySchema = new mongoose.Schema({
-    userId: {
-        type: String,
-        required: true, // ID Discord user
+const chatTurnSchema = new mongoose.Schema({
+    userId: { type: String, required: true },
+    channelId: { type: String, required: true },
+    turn: {
+        user: [messagePartSchema],  // Tin nhắn người dùng
+        model: [messagePartSchema], // Phản hồi của model
     },
-    channelId: {
-        type: String,
-        required: true, // để phân biệt theo channel
-    },
-    role: {
-        type: String,
-        enum: ["user", "model"],
-        required: true,
-    },
-    messageParts: [messagePartSchema],
-    createdAt: {
-        type: Date,
-        default: Date.now,
-    },
+    createdAt: { type: Date, default: Date.now },
 });
 
-export default mongoose.model("ChatHistory", chatHistorySchema);
+export default mongoose.model("ChatHistory", chatTurnSchema);
