@@ -8,47 +8,20 @@ import ChatHistory from "../../models/ChatHistory.js";
 dotenv.config();
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
-/**
- * 🧠 Lấy và định dạng lịch sử chat cho Gemini
- */
-async function getFormattedHistory(userId, channelId) {
-    try {
-        const historyFromDb = await ChatHistory.find({ userId, channelId }).sort({ createdAt: "asc" });
-
-        if (!historyFromDb.length) return [];
-
-        // Chuyển mỗi lượt chat thành 2 message (user và model)
-        return historyFromDb.flatMap((record) => {
-            const formatted = [];
-            if (record.turn.user?.length)
-                formatted.push({ role: "user", parts: record.turn.user });
-            if (record.turn.model?.length)
-                formatted.push({ role: "model", parts: record.turn.model });
-            return formatted;
-        });
-    } catch (error) {
-        console.error("Lỗi khi lấy lịch sử chat:", error);
-        return [];
-    }
-}
-
-/**
- * ✨ Xử lý khi người dùng gửi tin nhắn
- */
 export async function execute(message) {
-    const messageParts = [];
+    const userId = message.author.id;
+    const channelId = message.channel.id;
 
-    // 📜 Ghi nhận text
-    if (message.content?.trim()) {
+    // 🧩 1️⃣ Chuẩn bị parts cho tin nhắn user
+    const messageParts = [];
+    if (message.content && message.content.trim()) {
         messageParts.push({ text: message.content.trim() });
     }
 
-    // 🖼️ Ghi nhận file đính kèm
     for (const file of message.attachments.values()) {
         try {
             const localPath = await downloadFile(file.url);
             const detectedMime = file.contentType || "application/octet-stream";
-
             const uploaded = await ai.files.upload({
                 file: localPath,
                 config: {
@@ -58,46 +31,74 @@ export async function execute(message) {
             });
 
             messageParts.push({
-                fileData: { mimeType: detectedMime, fileUri: uploaded.uri },
+                fileData: {
+                    mimeType: detectedMime,
+                    fileUri: uploaded.uri,
+                },
             });
         } catch (err) {
             console.error("Error handling attachment", file.name, err);
         }
     }
 
-    // 🚀 Tiến hành chat
-    async function runChat() {
-        try {
-            const history = await getFormattedHistory(message.author.id, message.channel.id);
+    // 🧠 2️⃣ Lấy lịch sử chat của user
+    const userData = await ChatHistory.findOne({ userId, channelId }).lean();
+    let userHistory = [];
 
-            const chat = ai.chats.create({
-                model: "gemini-2.5-flash",
-                history,
-                config: { systemInstruction: systemPrompt },
-            });
-
-            console.log("Đang gửi tin nhắn đến Gemini...");
-            const res = await chat.sendMessage({ message: messageParts });
-
-            if (res?.text) {
-                message.channel.send(res.text);
-
-                // 💾 Lưu một lượt chat (user + model) chung 1 document
-                await ChatHistory.create({
-                    userId: message.author.id,
-                    channelId: message.channel.id,
-                    turn: {
-                        user: messageParts,
-                        model: [{ text: res.text }],
-                    },
-                });
-            } else {
-                message.channel.send("Có lỗi khi xử lý tin nhắn");
-            }
-        } catch (error) {
-            console.error("Đã xảy ra lỗi:", error.message);
+    if (userData) {
+        // Flatten all turns -> [{ role, parts }]
+        for (const turn of userData.turns) {
+            if (turn.user?.parts?.length)
+                userHistory.push({ role: "user", parts: turn.user.parts });
+            if (turn.model?.parts?.length)
+                userHistory.push({ role: "model", parts: turn.model.parts });
         }
     }
 
-    runChat();
+    // 🤖 3️⃣ Tạo đối tượng chat Gemini
+    try {
+        const chat = ai.chats.create({
+            model: "gemini-2.5-flash",
+            history: userHistory,
+            config: { systemInstruction: systemPrompt },
+        });
+
+        console.log("Đang gửi tin nhắn đến Gemini...");
+        const res = await chat.sendMessage({ message: messageParts });
+
+        // 💬 4️⃣ Gửi phản hồi và lưu lịch sử
+        const replyText = res?.text || "Không có phản hồi từ AI";
+
+        await message.channel.send(replyText);
+
+        if (userData) {
+            // Thêm turn mới vào document có sẵn
+            await ChatHistory.updateOne(
+                { userId, channelId },
+                {
+                    $push: {
+                        turns: {
+                            user: { parts: messageParts },
+                            model: { parts: [{ text: replyText }] },
+                        },
+                    },
+                }
+            );
+        } else {
+            // Tạo document mới nếu chưa có
+            await ChatHistory.create({
+                userId,
+                channelId,
+                turns: [
+                    {
+                        user: { parts: messageParts },
+                        model: { parts: [{ text: replyText }] },
+                    },
+                ],
+            });
+        }
+    } catch (error) {
+        console.error("Đã xảy ra lỗi:", error.message);
+        await message.channel.send("Lỗi khi xử lý phản hồi từ AI");
+    }
 }

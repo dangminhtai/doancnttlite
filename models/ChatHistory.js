@@ -8,14 +8,23 @@ const messagePartSchema = new mongoose.Schema({
     },
 });
 
+// Mỗi "chat turn" = user hỏi + model trả lời
 const chatTurnSchema = new mongoose.Schema({
-    userId: { type: String, required: true },
-    channelId: { type: String, required: true },
-    turn: {
-        user: [messagePartSchema],  // Tin nhắn người dùng
-        model: [messagePartSchema], // Phản hồi của model
+    user: {
+        parts: [messagePartSchema],
+    },
+    model: {
+        parts: [messagePartSchema],
     },
     createdAt: { type: Date, default: Date.now },
 });
 
-export default mongoose.model("ChatHistory", chatTurnSchema);
+const chatSchema = new mongoose.Schema({
+    userId: { type: String, required: true },
+    channelId: { type: String, required: true },
+    turns: [chatTurnSchema],
+});
+
+chatSchema.index({ userId: 1, channelId: 1 });
+
+export default mongoose.model("ChatHistory", chatSchema);
