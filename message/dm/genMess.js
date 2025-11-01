@@ -1,3 +1,4 @@
+import { startTypingLoop } from "../../utils/typingLoop.js";
 import { AIService } from "../../services/AIService.js";
 import { AttachmentService } from "../../services/AttachmentService.js";
 import { ChatHistoryService } from "../../services/ChatHistoryService.js";
@@ -11,20 +12,23 @@ export async function execute(message) {
     const messageParts = [];
 
     if (message.content?.trim()) messageParts.push({ text: message.content.trim() });
-
+    // bật typing giả
+    const stopTyping = startTypingLoop(message.channel);
     const attachmentParts = await attachmentService.processAttachments(message.attachments, aiService);
-
     messageParts.push(...attachmentParts);
 
     const history = await chatHistoryService.getUserHistory(userId, channelId);
 
+
+
     try {
         const chat = aiService.createChat(history);
         const replyText = await aiService.sendMessage(chat, messageParts);
+        stopTyping(); // dừng typing
         await message.channel.send(replyText);
         await chatHistoryService.saveTurn(userId, channelId, messageParts, [{ text: replyText }]);
-    }
-    catch (err) {
+    } catch (err) {
+        stopTyping(); // nhớ dừng kể cả khi lỗi
         console.error("Lỗi Gemini:", err.message);
         await message.channel.send("Lỗi khi xử lý phản hồi từ AI");
     }
