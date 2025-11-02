@@ -26,7 +26,15 @@ messageCreate(client);
 interactionCreate(client);
 
 
+import express from "express";
+const app = express();
+const PORT = 3003;
 
+app.get("/", (req, res) => {
+    res.send("Bot is running!");
+});
+
+app.listen(PORT, () => console.log(`Express server listening on port ${PORT}`));
 async function main() {
     try {
         await connectDB();
