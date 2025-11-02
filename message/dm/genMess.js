@@ -21,7 +21,9 @@ export async function execute(message) {
 
 
     try {
+        // console.log("Lịch sử chat nhận được:\n" + JSON.stringify(history, null, 2));
         const chat = aiService.createChat(history);
+        // console.log("Message Part hiện tại:\n " + JSON.stringify(messageParts, null, 2));
         const replyText = await aiService.sendMessage(chat, messageParts);
         stopTyping(); // dừng typing
         await message.channel.send(replyText);

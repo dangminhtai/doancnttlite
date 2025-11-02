@@ -42,6 +42,7 @@ export async function execute(message) {
         messageParts.push(...attachmentParts);
 
         const history = await chatHistoryService.getUserHistory(userId, channelId);
+        // console.log("Lịch sử chat nhận được:\n" + JSON.stringify(history, null, 2));
         const chat = aiService.createChat(history);
         const replyText = await aiService.sendMessage(chat, messageParts);
 

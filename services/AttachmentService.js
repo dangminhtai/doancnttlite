@@ -4,7 +4,9 @@ export class AttachmentService {
         const messageParts = [];
         for (const file of attachments.values()) {
             try {
-                const mimeType = file.contentType || "application/octet-stream";
+                const rawMime = file.contentType || "application/octet-stream";
+                const mimeType = rawMime.split(";")[0].trim();
+
                 const uri = await aiService.uploadFromUrl(file.url, file.name, mimeType);
                 messageParts.push({ fileData: { mimeType, fileUri: uri } });
             } catch (err) {

@@ -6,9 +6,8 @@ const messagePartSchema = new mongoose.Schema({
         mimeType: String,
         fileUri: String,
     },
-});
+}, { _id: false });
 
-// Mỗi "chat turn" = user hỏi + model trả lời
 const chatTurnSchema = new mongoose.Schema({
     user: {
         parts: [messagePartSchema],
@@ -17,7 +16,8 @@ const chatTurnSchema = new mongoose.Schema({
         parts: [messagePartSchema],
     },
     createdAt: { type: Date, default: Date.now },
-});
+}, { _id: false });
+
 
 const chatSchema = new mongoose.Schema({
     userId: { type: String, required: true },
