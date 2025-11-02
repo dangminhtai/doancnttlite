@@ -16,7 +16,6 @@ export async function execute(message) {
     const stopTyping = startTypingLoop(message.channel);
     const attachmentParts = await attachmentService.processAttachments(message.attachments, aiService);
     messageParts.push(...attachmentParts);
-
     const history = await chatHistoryService.getUserHistory(userId, channelId);
 
 

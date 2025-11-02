@@ -5,22 +5,23 @@ export class ChatHistoryService {
         const userData = await ChatHistory.findOne({ userId, channelId }).lean();
         if (!userData) return [];
 
+        const turns = userData.turns.slice(-20); // 💫 chỉ lấy 20 lượt gần nhất
         const flat = [];
-        for (const turn of userData.turns) {
+
+        for (const turn of turns) {
             if (turn.user?.parts?.length) flat.push({ role: "user", parts: turn.user.parts });
             if (turn.model?.parts?.length) flat.push({ role: "model", parts: turn.model.parts });
         }
+
         return flat;
     }
 
     async saveTurn(userId, channelId, userParts, modelParts) {
-        const existing = await ChatHistory.findOne({ userId, channelId });
         const turn = { user: { parts: userParts }, model: { parts: modelParts } };
-
-        if (existing) {
-            await ChatHistory.updateOne({ userId, channelId }, { $push: { turns: turn } });
-        } else {
-            await ChatHistory.create({ userId, channelId, turns: [turn] });
-        }
+        await ChatHistory.updateOne(
+            { userId, channelId },
+            { $push: { turns: turn } },
+            { upsert: true }
+        );
     }
 }
