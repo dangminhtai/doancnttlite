@@ -15,16 +15,15 @@ export class AIService {
         const arrayBuffer = await res.arrayBuffer();
         const buffer = Buffer.from(arrayBuffer);
         if (!buffer.length) throw new Error(`Empty file: ${fileName}`);
-
-        const cleanMime = (mimeType || "application/octet-stream").split(";")[0].trim();
-        console.log('Mime type sau khi chuẩn hóa', cleanMime);
-        const blob = new Blob([buffer], { type: cleanMime });
+        // const cleanMime = (mimeType || "application/octet-stream").split(";")[0].trim();
+        // console.log('Mime type sau khi chuẩn hóa', cleanMime);
+        const blob = new Blob([buffer], { type: mimeType });
 
         const uploaded = await this.ai.files.upload({
             file: blob,
             config: {
                 displayName: fileName,
-                mimeType: cleanMime,
+                mimeType: mimeType,
             },
         });
 

@@ -2,6 +2,7 @@ import { startTypingLoop } from "../../utils/typingLoop.js";
 import { AIService } from "../../services/AIService.js";
 import { AttachmentService } from "../../services/AttachmentService.js";
 import { ChatHistoryService } from "../../services/ChatHistoryService.js";
+import { sendSafeMessage } from "../../utils/sendSafeMessage.js"; // ✅ thêm dòng này
 
 export async function execute(message) {
     if (message.author.bot) return;
@@ -19,8 +20,6 @@ export async function execute(message) {
     }
 
     const isMemiChat = message.channel.name === "memi-chat";
-
-    // nếu không phải 1 trong 3 điều kiện -> bỏ qua
     if (!isMentioned && !isReplyToBot && !isMemiChat) return;
 
     const userId = message.author.id;
@@ -31,7 +30,6 @@ export async function execute(message) {
     const attachmentService = new AttachmentService();
     const messageParts = [];
 
-    // xóa mention bot trong nội dung (cho đỡ nhảm)
     const cleanContent = message.content?.replaceAll(`<@!?${botId}>`, "").trim();
     if (cleanContent) messageParts.push({ text: cleanContent });
 
@@ -42,16 +40,15 @@ export async function execute(message) {
         messageParts.push(...attachmentParts);
 
         const history = await chatHistoryService.getUserHistory(userId, channelId);
-        // console.log("Lịch sử chat nhận được:\n" + JSON.stringify(history, null, 2));
         const chat = aiService.createChat(history);
         const replyText = await aiService.sendMessage(chat, messageParts);
 
         stopTyping();
-        await message.reply(replyText);
+        await sendSafeMessage(message, replyText); // ✅ thay thế message.reply
         await chatHistoryService.saveTurn(userId, channelId, messageParts, [{ text: replyText }]);
     } catch (err) {
         stopTyping();
         console.error("Lỗi Gemini (server):", err.message);
-        await message.channel.send("Lỗi khi xử lý phản hồi từ AI");
+        await sendSafeMessage(message, "Lỗi khi xử lý phản hồi từ AI");
     }
 }
