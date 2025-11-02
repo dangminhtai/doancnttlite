@@ -1,16 +1,27 @@
-// utils/sendSafeMessage.js
+import { AttachmentBuilder } from "discord.js";
+import fs from "fs";
+import path from "path";
+
 export async function sendSafeMessage(message, content) {
     if (!content) return;
 
-    // Nếu là object hoặc mảng thì stringify để tránh lỗi
     if (typeof content !== "string") {
         content = String(content);
     }
 
-    // Discord giới hạn 2000 ký tự mỗi tin nhắn
-    const chunks = content.match(/[\s\S]{1,2000}/g);
-
-    for (const chunk of chunks) {
-        await message.reply(chunk);
+    if (content.length <= 2000) {
+        await message.reply(content);
+        return;
     }
+
+    const filePath = path.join(process.cwd(), "long_message.md");
+    fs.writeFileSync(filePath, content, "utf-8");
+
+    const file = new AttachmentBuilder(filePath);
+    await message.reply({
+        content: "Tin nhắn quá dài, xem file 👉",
+        files: [file],
+    });
+
+    fs.unlinkSync(filePath);
 }

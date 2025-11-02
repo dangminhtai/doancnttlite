@@ -1,8 +1,8 @@
 import { GoogleGenAI } from "@google/genai";
 import { GEMINI_API_KEY } from "../config/env.js";
 import { systemPrompt } from "../config/systemPrompt/vn.js";
-import { File } from "buffer";
 import { Blob } from "node:buffer";
+import { tools } from "../config/tools.js";
 export class AIService {
     constructor() {
         this.ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
@@ -37,7 +37,11 @@ export class AIService {
         return this.ai.chats.create({
             model: "gemini-2.5-flash-lite-preview-09-2025",
             history: history,
-            config: { systemInstruction: systemPrompt },
+            config: {
+                systemInstruction: systemPrompt,
+                tools: tools,
+                temperature: 0.4,
+            },
         });
     }
 
