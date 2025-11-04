@@ -1,8 +1,9 @@
 import { GoogleGenAI } from "@google/genai";
 import { GEMINI_API_KEY } from "../config/env.js";
-import { systemPrompt } from "../config/systemPrompt/vn.js";
+import { systemPrompt, systemPromptForFunction } from "../config/systemPrompt/vn.js";
 import { Blob } from "node:buffer";
 import { tools } from "../config/tools.js";
+import { sendResFunction } from "../config/resSchema.js";
 export class AIService {
     constructor() {
         this.ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
@@ -44,9 +45,21 @@ export class AIService {
             },
         });
     }
-
+    async genContent(contents) {
+        return this.ai.models.generateContent({
+            model: "gemini-2.5-flash-lite-preview-09-2025",
+            contents: contents,
+            config: {
+                tools: [{
+                    functionDeclarations: [sendResFunction]
+                }]
+            },
+        })
+    }
     async sendMessage(chat, messageParts) {
         const res = await chat.sendMessage({ message: messageParts });
-        return res?.text || "Không có phản hồi từ AI";
+        return res.text || 'Không có phản hồi từ Memi, đang gặp lỗi hệ thống';
+        // const resObj = JSON.parse(res.text);
+        // return resObj.message;
     }
 }
