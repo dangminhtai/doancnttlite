@@ -3,6 +3,7 @@ import { AIService } from "../../services/AIService.js";
 import { AttachmentService } from "../../services/AttachmentService.js";
 import { ChatHistoryService } from "../../services/ChatHistoryService.js";
 import { sendImage } from "../../functionCalling/sendImage.js";
+import { sendSafeMessage } from "../../utils/sendSafeMessage.js";
 export async function execute(message) {
     const userId = message.author.id;
     const channelId = message.channel.id;
@@ -18,12 +19,11 @@ export async function execute(message) {
     messageParts.push(...attachmentParts);
     const history = await chatHistoryService.getUserHistory(userId, channelId);
 
-
-
     try {
         const res = await aiService.genContent(messageParts);
 
         if (res.functionCalls?.length > 0) {
+            console.log('Function Calling được gọi');
             const funcCall = res.functionCalls[0];
             const sendImg = funcCall.args?.send_image;
             await sendImage(sendImg, messageParts, message);
@@ -33,13 +33,13 @@ export async function execute(message) {
             const chat = aiService.createChat(history);
             const replyText = await aiService.sendMessage(chat, messageParts);
             stopTyping();
-            await message.channel.send(replyText);
+            await sendSafeMessage(message, replyText);
             await chatHistoryService.saveTurn(userId, channelId, messageParts, [{ text: replyText }]);
         }
 
     } catch (err) {
         stopTyping();
         console.error("Lỗi Gemini:", err.message);
-        await message.channel.send("Lỗi khi xử lý phản hồi từ AI");
+        await sendSafeMessage(message, "Lỗi khi xử lý phản hồi từ AI");
     }
 }
