@@ -26,14 +26,17 @@ export async function execute(message) {
         if (res.functionCalls?.length > 0) {
             const funcCall = res.functionCalls[0];
             const sendImg = funcCall.args?.send_image;
-            sendImage(sendImg);
+            await sendImage(sendImg, messageParts, message);
+            stopTyping();
+        }
+        else {
+            const chat = aiService.createChat(history);
+            const replyText = await aiService.sendMessage(chat, messageParts);
+            stopTyping();
+            await message.channel.send(replyText);
+            await chatHistoryService.saveTurn(userId, channelId, messageParts, [{ text: replyText }]);
         }
 
-        const chat = aiService.createChat(history);
-        const replyText = await aiService.sendMessage(chat, messageParts);
-        stopTyping();
-        await message.channel.send(replyText);
-        await chatHistoryService.saveTurn(userId, channelId, messageParts, [{ text: replyText }]);
     } catch (err) {
         stopTyping();
         console.error("Lỗi Gemini:", err.message);

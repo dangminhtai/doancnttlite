@@ -56,10 +56,20 @@ export class AIService {
             },
         })
     }
+    async sendImageText(messageParts) {
+        return this.ai.models.generateContent(
+            {
+                model: "gemini-2.0-flash-preview-image-generation",
+                contents: messageParts,
+                config: {
+                    responseModalities: ["TEXT", "IMAGE"],
+                }
+            }
+        )
+    }
     async sendMessage(chat, messageParts) {
         const res = await chat.sendMessage({ message: messageParts });
-        return res.text || 'Không có phản hồi từ Memi, đang gặp lỗi hệ thống';
-        // const resObj = JSON.parse(res.text);
-        // return resObj.message;
+        return res.text || 'Không có phản hồi từ Memi, đang gặp lỗi hệ thống'
     }
+
 }

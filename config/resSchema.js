@@ -15,14 +15,14 @@ import { Type } from "@google/genai"
 //     required: ['message', 'send_image']
 // }
 export const sendResFunction = {
-    name: 'send_respond',
-    description: 'Quyết định có nên tạo hình ảnh cho người dùng hay không?',
+    name: 'send_response',
+    description: 'Tạo ảnh cho người dùng nếu được yêu cầu tạo ảnh',
     parameters: {
         type: Type.OBJECT,
         properties: {
             send_image: {
                 type: Type.BOOLEAN,
-                description: "True khi người dùng yêu cầu bạn tạo hình ảnh, hàm sẽ được gọi để bên thứ 3 tạo ảnh",
+                description: "sẽ bằng True khi người dùng yêu cầu bạn tạo hình ảnh, hàm sẽ được gọi để bên thứ 3 tạo hình ảnh",
             }
         },
         required: ['send_image']
