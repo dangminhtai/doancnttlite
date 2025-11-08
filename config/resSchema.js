@@ -16,7 +16,7 @@ import { Type } from "@google/genai"
 // }
 export const sendResFunction = {
     name: 'send_response',
-    description: 'Xử lý yêu cầu liên quan đến hình ảnh từ người dùng, bao gồm việc tạo, chỉnh sửa hoặc gửi hình ảnh khi mô hình xác định rằng phản hồi nên ở dạng hình ảnh thay vì chỉ văn bản.',
+    description: 'Xử lý mọi yêu cầu liên quan đến hình ảnh từ người dùng, bao gồm việc tạo, chỉnh sửa hoặc gửi hình ảnh khi mô hình xác định rằng phản hồi nên ở dạng hình ảnh thay vì chỉ văn bản.',
     parameters: {
         type: Type.OBJECT,
         properties: {

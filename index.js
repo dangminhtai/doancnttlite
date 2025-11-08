@@ -29,11 +29,19 @@ interactionCreate(client);
 import express from "express";
 const app = express();
 const PORT = process.env.PORT || 3000;
-app.get("/", (req, res) => {
-    res.send("Bot is running!");
+// app.get("/", (req, res) => {
+//     res.send("Bot is running!");
+// });
+
+// app.listen(PORT, () => console.log(`Express server listening on port ${PORT}`));
+// serve static build của React
+app.use(express.static(path.join(__dirname, "web", "build")));
+
+app.get(/.*/, (req, res) => {
+    res.sendFile(path.join(__dirname, "web", "build", "index.html"));
 });
 
-app.listen(PORT, () => console.log(`Express server listening on port ${PORT}`));
+app.listen(PORT, () => console.log(`Server đang chạy tại http://localhost:${PORT}`));
 async function main() {
     try {
         await connectDB();
