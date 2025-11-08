@@ -1,25 +1,37 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import './App.css';
-import logo from './logo.svg';
+
+interface Command {
+  _id: string;
+  name: string;
+  updatedAt: string;
+}
 
 function App() {
+  const [commands, setCommands] = useState<Command[]>([]);
+
+  useEffect(() => {
+    fetch('/api/commands')
+      .then(res => res.json())
+      .then(data => setCommands(data))
+      .catch(err => console.error('Lỗi fetch:', err));
+  }, []);
+
   return (
     <div className="App">
       <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <h1>Discord Bot Dashboard</h1>
-        <p>
-          Bot đang chạy ổn định ✅<br />
-          Sửa file <code>src/App.tsx</code> nếu muốn thêm tính năng hiển thị.
-        </p>
-        <a
-          className="App-link"
-          href="https://discord.com"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Mở Discord
-        </a>
+        <h1>Danh sách Command trong DB</h1>
+        {commands.length > 0 ? (
+          <ul>
+            {commands.map(cmd => (
+              <li key={cmd._id}>
+                <strong>{cmd.name}</strong> — cập nhật lúc {new Date(cmd.updatedAt).toLocaleString()}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p>Không có dữ liệu hoặc đang tải...</p>
+        )}
       </header>
     </div>
   );

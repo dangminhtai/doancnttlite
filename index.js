@@ -5,7 +5,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { loadCommands, deployCommands } from './deployCommands.js'
 import { connectDB } from './db.js';
-
+import Command from './models/Command.js';
 import onReady from './events/Client/onReady.js';
 import messageCreate from './events/Client/messageCreate.js';
 import interactionCreate from './events/Client/interactionCreate.js';
@@ -29,17 +29,22 @@ interactionCreate(client);
 import express from "express";
 const app = express();
 const PORT = process.env.PORT || 3000;
-// app.get("/", (req, res) => {
-//     res.send("Bot is running!");
-// });
 
-// app.listen(PORT, () => console.log(`Express server listening on port ${PORT}`));
-// serve static build của React
 app.use(express.static(path.join(__dirname, "web", "build")));
 
+app.get("/api/commands", async (req, res) => {
+    try {
+        const commands = await Command.find().lean();
+        res.json(commands);
+    } catch (err) {
+        console.error("Lỗi lấy danh sách command:", err);
+        res.status(500).json({ error: "Lỗi server" });
+    }
+});
 app.get(/.*/, (req, res) => {
     res.sendFile(path.join(__dirname, "web", "build", "index.html"));
 });
+
 
 app.listen(PORT, () => console.log(`Server đang chạy tại http://localhost:${PORT}`));
 async function main() {
